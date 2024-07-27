@@ -2,6 +2,7 @@ import {
   emailValidator,
   passwordValidator,
 } from "../validations/auth.validation.js";
+import { AppConfig } from "../env.config.js";
 
 const validateRegistrationBody = (req, res, next) => {
   const { name, email, password } = req.body;
@@ -63,4 +64,26 @@ const validateLoginBody = (req, res, next) => {
   next();
 };
 
-export { validateRegistrationBody, validateLoginBody };
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7); // Remove "Bearer " from the beginning
+
+    return jwt.verify(token, AppConfig.AUTH.JWT_SECRET, (err, decoded) => {
+      if (err) return res.status(403).json({
+        success: false,
+        message: 'Invalid Auth'
+      })
+
+      req.auth = decoded?.data;
+      next()
+    })
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: "Authorization Required",
+  });
+};
+
+export { validateRegistrationBody, validateLoginBody, authMiddleware };

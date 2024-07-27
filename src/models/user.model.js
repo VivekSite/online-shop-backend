@@ -12,12 +12,21 @@ const userSchema = new Schema(
       unique: true,
       validate: [emailValidator, "Invalid email address"],
     },
+    country: {
+      type: String,
+      required: true,
+    },
+    mobile: {
+      type: String,
+      length: 10
+    },
     password: {
       type: String,
       required: true,
     },
     profileImage: { type: String, default: "" },
     isEmailVerified: { type: Boolean, default: false },
+    isMobileVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     updated_at: {
       type: Number,
@@ -41,5 +50,5 @@ userSchema.index({
   name: 1,
 });
 
-const userModel = mongoose.model("Users", userSchema);
+const userModel = mongoose.model("users", userSchema);
 export { userModel };
