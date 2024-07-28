@@ -15,8 +15,9 @@ const productSchema = new Schema({
     min: 0,
     max: 100,
   },
-  seller: {
+  sellerId: {
     type: Schema.Types.ObjectId,
+    ref: 'sellers',
     required: true,
   },
   inStock: {
