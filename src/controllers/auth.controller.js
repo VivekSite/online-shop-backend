@@ -25,7 +25,7 @@ export const signUpHandler = async (req, res) => {
     // Sign a token
     const token = jwt.sign(
       { name, email, _id: newUser._id, image: newUser.profileImage },
-      AppConfig.JWT_SECRET,
+      AppConfig.AUTH.JWT_SECRET,
       {
         expiresIn: "10d",
       }
@@ -64,7 +64,7 @@ export const signInHandler = async (req, res) => {
     // Sign a token
     const token = jwt.sign(
       { name: existingUser.name, email, _id: existingUser._id, image: existingUser.profileImage },
-      AppConfig.JWT_SECRET,
+      AppConfig.AUTH.JWT_SECRET,
       {
         expiresIn: "10d",
       }
@@ -91,7 +91,7 @@ export const verifyToken = async (req, res) => {
       })
     }
 
-    const decoded = jwt.verify(token, AppConfig.JWT_SECRET);
+    const decoded = jwt.verify(token, AppConfig.AUTH.JWT_SECRET);
 
     return res.status(200).json({
       decoded

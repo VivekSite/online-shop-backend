@@ -24,12 +24,6 @@ const sellerSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  products: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'products',
-    }
-  ],
   packaging_service: {
     type: String,
     enum: ["Own", "By Platform"],
