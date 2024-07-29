@@ -23,4 +23,28 @@ const createHandler = catchAsync(async (req, res) => {
   })
 });
 
-export { createHandler }
+const getHandler = catchAsync(async (req, res) => {
+  const products = await productModel.find();
+
+  return res.status(200).send({
+    products
+  })
+})
+
+const searchHandler = catchAsync(async (req, res) => {
+  const { query } = req.query;
+  const searchRegex = new RegExp(query, 'i');
+
+  const products = await productModel.find({
+    $or: [
+      { title: { $regex: searchRegex } },
+      { tags: { $in: [query] } }
+    ]
+  })
+
+  return res.status(200).send({
+    products
+  })
+});
+
+export { createHandler, getHandler, searchHandler }

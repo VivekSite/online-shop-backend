@@ -2,11 +2,11 @@ import crypto from "crypto";
 import { AppConfig } from "../env.config.js";
 
 const createHash = (data) => {
-  if (!AppConfig.HASH_SECRET) {
+  if (!AppConfig.AUTH.HASH_SECRET) {
     throw new Error("HASH_SECRET is not found");
   }
 
-  const salt = AppConfig.HASH_SECRET;
+  const salt = AppConfig.AUTH.HASH_SECRET;
 
   const hash = crypto.createHash("sha256");
   hash.update(data);
