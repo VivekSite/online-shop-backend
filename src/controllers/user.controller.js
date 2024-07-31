@@ -2,6 +2,32 @@ import { shoppingCartModel } from "../models/shopping-cart.model.js";
 import { productModel } from "../models/product.model.js";
 import { catchAsync } from "../utils/response.util.js"
 
+const GetCartSubTotal = async (user_id) => {
+  const userCart = await shoppingCartModel.findOne({ user_id });
+  const productIds = userCart.products.map(product => product._id);
+  const products = await productModel.find({ _id: { $in: productIds } });
+  const data = {}
+  products.forEach(product => {
+    data[product._id] = product
+  })
+
+  userCart.products.forEach(product => {
+    product._id = data[product._id]
+  })
+
+  const subTotal = userCart.products.reduce((total, product) => {
+    if (product.isSelected) {
+      const discountedPrice = Math.round(
+        product._id.price - product._id.price * (product._id.discount / 100)
+      )
+      return total + discountedPrice * product.quantity;
+    }
+    return total;
+  }, 0)
+
+  return subTotal;
+}
+
 const addToCartHandler = catchAsync(async (req, res) => {
   const { _id } = req.auth;
   if (!_id) {
@@ -81,7 +107,17 @@ const getCartDataHandler = catchAsync(async (req, res) => {
     product._id = data[product._id]
   })
 
-  return res.send({ cartData: userCart });
+  const subTotal = userCart.products.reduce((total, product) => {
+    if (product.isSelected) {
+      const discountedPrice = Math.round(
+        product._id.price - product._id.price * (product._id.discount / 100)
+      )
+      return total + discountedPrice * product.quantity;
+    }
+    return total;
+  }, 0)
+
+  return res.send({ cartData: userCart, subTotal });
 
 });
 
@@ -101,8 +137,11 @@ const ProductSelectionHandler = catchAsync(async (req, res) => {
     { new: true }
   );
 
+  const CartSubTotal = await GetCartSubTotal(user_id);
+
   return res.status(200).send({
     success: true,
+    subTotal: CartSubTotal,
     message: "Selections updated successfully"
   })
 })
@@ -123,8 +162,11 @@ const UpdateProductQuantityHandler = catchAsync(async (req, res) => {
     { new: true }
   );
 
+  const CartSubTotal = await GetCartSubTotal(user_id);
+
   return res.status(200).send({
     success: true,
+    subTotal: CartSubTotal,
     message: "Quantity updated successfully"
   })
 })
