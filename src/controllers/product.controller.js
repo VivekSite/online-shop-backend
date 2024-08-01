@@ -24,7 +24,13 @@ const createHandler = catchAsync(async (req, res) => {
 });
 
 const getHandler = catchAsync(async (req, res) => {
-  const products = await productModel.find();
+  const { productId } = req.query;
+  const query = {};
+
+  if (productId) {
+    query._id = productId;
+  }
+  const products = await productModel.find(query);
 
   return res.status(200).send({
     products
