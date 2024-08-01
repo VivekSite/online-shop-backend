@@ -4,16 +4,29 @@ const shoppingCartSchema = new Schema({
   user_id: {
     type: Schema.Types.ObjectId,
     ref: 'users',
-    required: true
+    required: true,
+    unique: true,
   },
   products: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'products',
+      _id: {
+        type: Schema.Types.ObjectId,
+        ref: 'products',
+        unique: true,
+      },
+      quantity: {
+        type: Number,
+      },
+      isSelected: {
+        type: Boolean,
+        default: false,
+      },
     }
   ]
 });
 
+shoppingCartSchema.index({
+  user_id: 1
+})
 
-
-export const shoppingCart = new model('shopping_cart', shoppingCartSchema);
+export const shoppingCartModel = new model('shopping_cart', shoppingCartSchema);

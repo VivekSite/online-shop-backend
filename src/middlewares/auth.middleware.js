@@ -3,6 +3,7 @@ import {
   passwordValidator,
 } from "../validations/auth.validation.js";
 import { AppConfig } from "../env.config.js";
+import jwt from "jsonwebtoken"
 
 const validateRegistrationBody = (req, res, next) => {
   const { name, email, password } = req.body;
@@ -75,7 +76,7 @@ const authMiddleware = (req, res, next) => {
         message: 'Invalid Auth'
       })
 
-      req.auth = decoded?.data;
+      req.auth = decoded;
       next()
     })
   }
