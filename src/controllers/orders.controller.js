@@ -1,4 +1,5 @@
 import { orderModel } from "../models/order.model.js";
+import { productModel } from "../models/product.model.js";
 import { catchAsync } from "../utils/response.util.js"
 
 const getOrdersByUserId = catchAsync(async (req, res) => {
@@ -34,8 +35,7 @@ const createOrder = catchAsync(async (req, res) => {
     addressId,
     quantity,
     payment_method,
-    payment_status,
-    order_summary } = req.body;
+    payment_status } = req.body;
 
   if (!productId) {
     return res.status(400).send({
@@ -51,6 +51,16 @@ const createOrder = catchAsync(async (req, res) => {
     })
   }
 
+  const product = await productModel.findById(productId);
+  const Subtotal = Math.round(product.price - product.price * (product.discount/100)) * quantity;
+  const Shipping = Subtotal > 499 ? 0 : 50;
+  const order_summary = {
+    Subtotal,
+    Shipping,
+    Total: Subtotal + Shipping,
+    GrandTotal: Subtotal
+  }
+
   await orderModel.create({
     user_id,
     product: productId,
@@ -63,7 +73,7 @@ const createOrder = catchAsync(async (req, res) => {
 
   return res.status(201).send({
     success: true,
-    message: "Your order has been created"
+    message: "Your order has been placed successfully"
   });
 })
 

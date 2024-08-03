@@ -41,7 +41,6 @@ const orderSchema = new Schema({
   order_summary: {
     Subtotal: Number,
     Shipping: Number,
-    Cash: Number,
     Total: Number,
     Promotion_Applied: Number,
     GrandTotal: Number
