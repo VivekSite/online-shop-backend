@@ -41,6 +41,26 @@ const createHandler = catchAsync(async (req, res) => {
   })
 });
 
+const getHandler = catchAsync(async (req, res) => {
+  const { sellerId } = req.query;
+
+  const seller = await sellerModel.findById(sellerId);
+
+  return res.send(null);
+})
+
+const getMerchantNameById = catchAsync(async (req, res) => {
+  const { sellerId } = req.query;
+
+  const seller = await sellerModel.findById(sellerId);
+  return res.send({
+    success: true,
+    merchant_name: seller.merchant_name
+  })
+});
+
 export {
-  createHandler
+  createHandler, 
+  getHandler,
+  getMerchantNameById
 }
