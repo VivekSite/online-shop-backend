@@ -13,7 +13,7 @@ const getOrdersByUserId = catchAsync(async (req, res) => {
 
   const orders = await orderModel.find({
     user_id
-  }).populate('product');
+  }).populate('product').populate('shipping_address');
 
   return res.status(200).send({
     success: true,
@@ -34,8 +34,7 @@ const createOrder = catchAsync(async (req, res) => {
     productId,
     addressId,
     quantity,
-    payment_method,
-    payment_status } = req.body;
+    payment_method } = req.body;
 
   if (!productId) {
     return res.status(400).send({
@@ -67,7 +66,6 @@ const createOrder = catchAsync(async (req, res) => {
     quantity,
     shipping_address: addressId,
     payment_method,
-    payment_status,
     order_summary,
   })
 
