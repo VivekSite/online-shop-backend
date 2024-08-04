@@ -19,8 +19,8 @@ const addressSchema = new Schema({
   },
   country: {
     type: String,
-    enum: ['in'],
-    default: 'in'
+    enum: ['india'],
+    default: 'india'
   },
   state: {
     type: String,

@@ -14,5 +14,10 @@ export const AppConfig = {
   AUTH: {
     JWT_SECRET: process.env.JWT_SECRET,
     HASH_SECRET: process.env.HASH_SECRET,
+    OTP_SECRET: process.env.OTP_SECRET,
+  },
+  TWILIO: {
+    ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+    AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
   }
 }
