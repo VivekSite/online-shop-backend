@@ -19,7 +19,8 @@ const addressSchema = new Schema({
   },
   country: {
     type: String,
-    required: true
+    enum: ['india'],
+    default: 'india'
   },
   state: {
     type: String,
@@ -57,5 +58,9 @@ const addressSchema = new Schema({
 }, {
   timestamps: true,
 });
+
+addressSchema.index({
+  user_id: 1
+})
 
 export const addressModel = new model('addresses', addressSchema);

@@ -1,105 +1,198 @@
 import { userModel } from "../models/user.model.js";
+import { otpModel } from "../models/otp.model.js"
 import { AppConfig } from "../env.config.js";
-import { createHash, compare } from "../utils/hash.util.js";
 import jwt from "jsonwebtoken";
 
-export const signUpHandler = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+import { generateOTP, compareOTP } from "../utils/otp.util.js"
+import { createHash, compare } from "../utils/hash.util.js";
+import { catchAsync } from "../utils/response.util.js"
+import { sendMessage } from "../vendors/twilio.vendor.js";
 
-    const existingUser = await userModel.findOne({ email: email });
+export const signUpHandler = catchAsync(async (req, res) => {
+  const { name, email, password } = req.body;
 
-    if (existingUser) {
-      return res.status(409).send({
-        message: `User with email ${email} already exists`,
-      });
-    }
+  const existingUser = await userModel.findOne({ email: email });
 
-    const hashedPassword = createHash(password);
-    const newUser = await userModel.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    // Sign a token
-    const token = jwt.sign(
-      { name, email, _id: newUser._id, image: newUser.profileImage },
-      AppConfig.AUTH.JWT_SECRET,
-      {
-        expiresIn: "10d",
-      }
-    );
-
-    return res.status(200).json({
-      message: "User created successfully",
-      token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message,
+  if (existingUser) {
+    return res.status(409).send({
+      message: `User with email ${email} already exists`,
     });
   }
-};
 
-export const signInHandler = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const hashedPassword = createHash(password);
+  const newUser = await userModel.create({
+    name,
+    email,
+    password: hashedPassword,
+  });
 
-    const existingUser = await userModel.findOne({ email: email });
-
-    if (!existingUser) {
-      return res.status(404).send({
-        message: `User with email ${email} not found`,
-      });
+  // Sign a token
+  const token = jwt.sign(
+    { name, email, _id: newUser._id, image: newUser.profileImage },
+    AppConfig.AUTH.JWT_SECRET,
+    {
+      expiresIn: "10d",
     }
+  );
 
-    const isPasswordCurrect = compare(existingUser.password, password);
-    if (!isPasswordCurrect) {
-      return res.status(401).json({
-        message: "Wrong password!",
-      });
-    }
+  return res.status(200).json({
+    message: "User created successfully",
+    token,
+  });
+});
 
-    // Sign a token
-    const token = jwt.sign(
-      { name: existingUser.name, email, _id: existingUser._id, image: existingUser.profileImage },
-      AppConfig.AUTH.JWT_SECRET,
-      {
-        expiresIn: "10d",
-      }
-    );
+export const signInHandler = catchAsync(async (req, res) => {
+  const { email, password } = req.body;
 
-    return res.status(200).json({
-      message: "Login successful",
-      token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message,
+  const existingUser = await userModel.findOne({ email: email });
+
+  if (!existingUser) {
+    return res.status(404).send({
+      message: `User with email ${email} not found`,
     });
   }
-};
 
-export const verifyToken = async (req, res) => {
-  try {
-    const { token } = req.body
+  const isPasswordCurrect = compare(existingUser.password, password);
+  if (!isPasswordCurrect) {
+    return res.status(401).json({
+      message: "Wrong password!",
+    });
+  }
 
-    if(!token) {
-      return res.status(400).json({
-        message: "Invalid token"
-      })
+  // Sign a token
+  const token = jwt.sign(
+    { name: existingUser.name, email, _id: existingUser._id, image: existingUser.profileImage },
+    AppConfig.AUTH.JWT_SECRET,
+    {
+      expiresIn: "10d",
     }
+  );
 
-    const decoded = jwt.verify(token, AppConfig.AUTH.JWT_SECRET);
+  return res.status(200).json({
+    message: "Login successful",
+    token,
+  });
+});
 
-    return res.status(200).json({
-      decoded
-    })
-  } catch (error) {
-    return res.status(500).json({
-      message: "Invalid token",
-      error: error.message
+export const verifyToken = catchAsync(async (req, res) => {
+  const { token } = req.body
+
+  if (!token) {
+    return res.status(400).json({
+      message: "Invalid token"
     })
   }
-};
+
+  const decoded = jwt.verify(token, AppConfig.AUTH.JWT_SECRET);
+
+  return res.status(200).json({
+    decoded
+  })
+});
+
+export const sendOTPHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  let otpFor = "email";
+  const { email, phone_number } = req.body;
+  if (phone_number) {
+    otpFor = "mobile";
+  }
+
+  const { otp, bufferData } = generateOTP(email);
+  const expiresIn = Date.now() + 1000 * 60 * 10;
+  await otpModel.create({
+    user_id,
+    bufferData,
+    for: otpFor,
+    exp: expiresIn,
+  });
+
+  if (otpFor === "mobile") {
+    sendMessage(phone_number, otp)
+    return res.status(200).send({
+      success: true,
+      message: `OTP is sent on number xxxxxx${phone_number.toString().slice(-4)}`
+    })
+  }
+
+  return res.status(200).send({
+    success: true,
+    otp,
+    message: "OTP is sent to registered email"
+  })
+})
+
+export const verifyOTPHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { otp } = req.body;
+  if (!otp) {
+    return res.status(400).send({
+      success: false,
+      message: "OTP is required!"
+    })
+  }
+
+  const previousOTP = await otpModel.findOne({
+    user_id
+  });
+
+  if (!previousOTP) {
+    return res.status(404).send({
+      success: false,
+      message: "OTP not found!"
+    })
+  };
+
+  if (previousOTP.exp < Date.now()) {
+    await otpModel.findByIdAndDelete(previousOTP._id);
+
+    return res.status(400).send({
+      success: false,
+      message: "OTP has been expired!"
+    });
+  }
+
+  const bufferData = previousOTP.bufferData;
+  const isVerified = compareOTP(bufferData, otp);
+  await otpModel.findByIdAndDelete(previousOTP._id);
+
+  if (!isVerified) {
+    return res.status(500).send({
+      success: false,
+      message: "OTP verification failed!"
+    })
+  }
+
+  if (previousOTP.for !== "email") {
+    await userModel.findByIdAndUpdate(user_id, {
+      isMobileVerified: true,
+    })
+
+    return res.status(200).send({
+      success: true,
+      message: "Mobile number verification successful"
+    })
+  }
+  await userModel.findByIdAndUpdate(user_id, {
+    isEmailVerified: true,
+  })
+
+  return res.status(200).send({
+    success: true,
+    message: "Email verification successful"
+  })
+})

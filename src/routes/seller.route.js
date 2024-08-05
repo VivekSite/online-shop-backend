@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { createHandler } from "../controllers/seller.controller.js";
+import { createHandler, getMerchantNameById } from "../controllers/seller.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const app = Router();
 
-app.post('/', createHandler);
+app.post('/', authMiddleware,  createHandler);
+app.get('/merchant_name', authMiddleware, getMerchantNameById);
 
 export default app;

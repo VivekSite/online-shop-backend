@@ -6,6 +6,11 @@ const sellerSchema = new Schema({
     ref: 'users',
     required: true
   },
+  merchant_name: {
+    type: String,
+    minLength: 5,
+    required: true
+  },
   gst: {
     type: String,
     required: true

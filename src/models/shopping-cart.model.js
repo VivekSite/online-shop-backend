@@ -9,7 +9,7 @@ const shoppingCartSchema = new Schema({
   },
   products: [
     {
-      _id: {
+      product: {
         type: Schema.Types.ObjectId,
         ref: 'products',
         unique: true,
