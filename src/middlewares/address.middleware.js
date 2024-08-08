@@ -12,10 +12,11 @@ const VerifyAddressBody = catchAsync(async (req, res, next) => {
     state,
     city,
     pin_code,
+    address
   } = req.body;
 
   if (!full_name || full_name.length < 3) {
-    throw new ErrorInvalidPayload("Full name must be at least 3 characters",); I
+    throw new ErrorInvalidPayload("Full name must be at least 3 characters"); I
   }
 
   if (!mobile_number) {
@@ -36,6 +37,10 @@ const VerifyAddressBody = catchAsync(async (req, res, next) => {
     throw new ErrorInvalidPayload("Pincode is required!");
   } else if (pin_code.length !== 6 || !isDigit(pin_code)) {
     throw new ErrorInvalidPayload("Invalid pin code!");
+  }
+
+  if(!address) {
+    throw new ErrorInvalidPayload("Address is required!");
   }
 
   next();

@@ -40,8 +40,8 @@ const addressSchema = new Schema({
     type: String,
   },
   address: {
-    line1: String,
-    line2: String,
+    type: String,
+    required: true
   },
   is_default: {
     type: Boolean,
