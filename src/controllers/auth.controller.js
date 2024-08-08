@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { generateOTP, compareOTP } from "../utils/otp.util.js"
 import { createHash, compare } from "../utils/hash.util.js";
 import { catchAsync } from "../utils/response.util.js"
-import { sendMessage } from "../vendors/twilio.vendor.js";
+import { sendOTP } from "../vendors/twilio.vendor.js";
 
 export const signUpHandler = catchAsync(async (req, res) => {
   const { name, email, password } = req.body;
@@ -115,7 +115,7 @@ export const sendOTPHandler = catchAsync(async (req, res) => {
   });
 
   if (otpFor === "mobile") {
-    sendMessage(phone_number, otp)
+    sendOTP(phone_number, otp)
     return res.status(200).send({
       success: true,
       message: `OTP is sent on number xxxxxx${phone_number.toString().slice(-4)}`

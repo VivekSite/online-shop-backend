@@ -51,7 +51,7 @@ const createOrder = catchAsync(async (req, res) => {
   }
 
   const product = await productModel.findById(productId);
-  const Subtotal = Math.round(product.price - product.price * (product.discount/100)) * quantity;
+  const Subtotal = Math.round(product.price - product.price * (product.discount / 100)) * quantity;
   const Shipping = Subtotal > 499 ? 0 : 50;
   const order_summary = {
     Subtotal,
@@ -75,7 +75,40 @@ const createOrder = catchAsync(async (req, res) => {
   });
 })
 
+const CancelOrderHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { orderId } = req.params;
+  if (!orderId) {
+    return res.status(400).send({
+      success: false,
+      message: "Order ID is required!"
+    })
+  }
+
+  const cancelled_at = Date.now();
+  await orderModel.findByIdAndUpdate(orderId, {
+    shipping_status: "cancelled",
+    payment_status: "cancelled",
+    is_cancelled: true,
+    cancelled_at,
+  })
+
+  return res.status(200).send({
+    success: true,
+    message: "Order cancelled successfully",
+    cancelled_at
+  })
+})
+
 export {
   getOrdersByUserId,
-  createOrder
+  createOrder,
+  CancelOrderHandler
 }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getOrdersByUserId, createOrder } from "../controllers/orders.controller.js";
+import { getOrdersByUserId, createOrder, CancelOrderHandler } from "../controllers/orders.controller.js";
 
 const app = Router({
   mergeParams: true,
@@ -7,5 +7,6 @@ const app = Router({
 
 app.get('/', getOrdersByUserId)
 app.post('/add', createOrder)
+app.patch('/:orderId', CancelOrderHandler)
 
 export default app;
