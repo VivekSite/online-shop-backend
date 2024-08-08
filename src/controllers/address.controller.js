@@ -10,11 +10,11 @@ const CreateHandler = catchAsync(async (req, res) => {
     });
   }
 
-  const { 
+  const {
     full_name,
     mobile_number,
-    state, 
-    city, 
+    state,
+    city,
     pin_code,
     landmark,
     address,
@@ -22,7 +22,7 @@ const CreateHandler = catchAsync(async (req, res) => {
 
   const existingAddress = await addressModel.find({ user_id });
   let is_default = false;
-  if(existingAddress.length === 0) {
+  if (existingAddress.length === 0) {
     is_default = true;
   }
 
@@ -53,7 +53,96 @@ const GetHandler = catchAsync(async (req, res) => {
     });
   }
 
-  
+  const addresses = await addressModel.find({
+    user_id
+  });
+
+  return res.status(200).send({
+    success: true,
+    addresses,
+  })
 });
 
-export { CreateHandler, GetHandler }
+const DeleteHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { addressId } = req.params;
+  if (!addressId) {
+    return res.status(400).send({
+      success: false,
+      message: "Address Id id Required!"
+    })
+  }
+  await addressModel.findByIdAndDelete(addressId);
+
+  return res.status(200).send({
+    success: true,
+    message: "Address deleted successfully"
+  })
+})
+
+const MakeDefaultHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { addressId } = req.params;
+  if (!addressId) {
+    return res.status(400).send({
+      success: false,
+      message: "Address Id id Required!"
+    })
+  }
+
+  await addressModel.findOneAndUpdate({
+    is_default: true
+  }, {
+    is_default: false
+  });
+
+  await addressModel.findOneAndUpdate({ _id: addressId }, { is_default: true });
+
+  return res.status(200).send({
+    success: true,
+    message: "Default Address updated successfully"
+  })
+
+});
+
+const UpdateAddressHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { addressId } = req.params;
+  if (!addressId) {
+    return res.status(400).send({
+      success: false,
+      message: "Address Id id Required!"
+    })
+  }
+
+  const { UpdateAddressFormData } = req.body;
+  await addressModel.findOneAndUpdate({ _id: addressId }, UpdateAddressFormData);
+
+  return res.status(200).send({
+    success: true, 
+    message: "Address updated successfully"
+  })
+})
+
+export { CreateHandler, GetHandler, DeleteHandler, MakeDefaultHandler, UpdateAddressHandler }

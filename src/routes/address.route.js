@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { CreateHandler, GetHandler } from "../controllers/address.controller.js";
+import {
+  CreateHandler,
+  GetHandler,
+  DeleteHandler,
+  MakeDefaultHandler,
+  UpdateAddressHandler
+} from "../controllers/address.controller.js";
 import { VerifyAddressBody } from "../middlewares/address.middleware.js";
 
 const app = Router({
@@ -8,5 +14,8 @@ const app = Router({
 
 app.post('/create', VerifyAddressBody, CreateHandler);
 app.get('/', GetHandler);
+app.delete('/:addressId', DeleteHandler);
+app.put("/:addressId", UpdateAddressHandler);
+app.patch('/make_default/:addressId', MakeDefaultHandler)
 
 export default app;

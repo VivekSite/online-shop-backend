@@ -1,5 +1,6 @@
 import { shoppingCartModel } from "../models/shopping-cart.model.js";
 import { catchAsync } from "../utils/response.util.js"
+import { userModel } from "../models/user.model.js"
 
 const GetCartSubTotal = async (user_id) => {
   const userCart = await shoppingCartModel
@@ -156,10 +157,29 @@ const UpdateProductQuantityHandler = catchAsync(async (req, res) => {
   })
 })
 
+const GetUserDataHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const user = await userModel.findById(user_id);
+
+  delete user.password;
+  return res.status(200).send({
+    success: true,
+    userData: user
+  });
+})
+
 export {
   addToCartHandler,
   removeFromCartHandler,
   getCartDataHandler,
   ProductSelectionHandler,
   UpdateProductQuantityHandler,
+  GetUserDataHandler
 }
