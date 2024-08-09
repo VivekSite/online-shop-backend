@@ -9,7 +9,7 @@ async function sendOTP(mobile_number, otp) {
   await client.messages.create({
     body: `Dear User, Your OTP is ${otp} for online shop.`,
     from: "whatsapp:+14155238886",
-    to: `whatsapp:${mobile_number}`,
+    to: `whatsapp:+91${mobile_number}`,
   });
 }
 
