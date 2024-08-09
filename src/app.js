@@ -14,6 +14,7 @@ app.use(express.json({
   limit: "80mb",
 }));
 app.use(cors());
+app.use(express.static('./static'))
 
 app.use("/api/v1", appRoutes);
 export default app;

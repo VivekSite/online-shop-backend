@@ -14,9 +14,9 @@ const otpSchema = new Schema({
     type: Buffer,
     required: true
   },
-  for: {
+  type: {
     type: String,
-    enum: ["mobile", "email"],
+    enum: ["Mobile", "Email"],
     required: true
   },
   created_at: {

@@ -107,8 +107,35 @@ const CancelOrderHandler = catchAsync(async (req, res) => {
   })
 })
 
+const getOrdersByIdHandler = catchAsync(async (req, res) => {
+  const { _id: user_id } = req.auth;
+  if (!user_id) {
+    return res.status(401).send({
+      success: false,
+      message: "Authentication Needed!"
+    });
+  }
+
+  const { orderId } = req.params;
+  if (!orderId) {
+    return res.status(400).send({
+      success: false,
+      message: "Order ID required!",
+      order: null
+    })
+  }
+
+  const orderData = await orderModel.findOne({ _id: orderId }).populate({ path: 'user_id', model: 'users' })
+
+  return res.status(200).send({
+    success: true,
+    order: orderData,
+  })
+})
+
 export {
   getOrdersByUserId,
   createOrder,
-  CancelOrderHandler
+  CancelOrderHandler,
+  getOrdersByIdHandler
 }
