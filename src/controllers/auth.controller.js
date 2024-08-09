@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken";
 import { generateOTP, compareOTP } from "../utils/otp.util.js"
 import { createHash, compare } from "../utils/hash.util.js";
 import { catchAsync } from "../utils/response.util.js"
+
 import { sendOTP } from "../vendors/twilio.vendor.js";
+import { sendGmail } from "../vendors/nodemailer.vendor.js";
 
 export const signUpHandler = catchAsync(async (req, res) => {
   const { name, email, password } = req.body;
@@ -91,7 +93,7 @@ export const verifyToken = catchAsync(async (req, res) => {
 });
 
 export const sendOTPHandler = catchAsync(async (req, res) => {
-  const { _id: user_id } = req.auth;
+  const { _id: user_id, name, email } = req.auth;
   if (!user_id) {
     return res.status(401).send({
       success: false,
@@ -99,32 +101,41 @@ export const sendOTPHandler = catchAsync(async (req, res) => {
     });
   }
 
-  let otpFor = "email";
-  const { email, phone_number } = req.body;
-  if (phone_number) {
-    otpFor = "mobile";
-  }
-
-  const { otp, bufferData } = generateOTP(email);
+  const { type, mobile_number } = req.body;
+  const { otp, bufferData } = generateOTP(mobile_number || email);
   const expiresIn = Date.now() + 1000 * 60 * 10;
   await otpModel.create({
     user_id,
     bufferData,
-    for: otpFor,
+    for: type,
     exp: expiresIn,
   });
 
-  if (otpFor === "mobile") {
-    sendOTP(phone_number, otp)
+  if (type === "Mobile") {
+    if (!mobile_number || mobile_number.length !== 10) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid mobile number!"
+      })
+    }
+
+    await sendOTP(phone_number, otp)
     return res.status(200).send({
       success: true,
       message: `OTP is sent on number xxxxxx${phone_number.toString().slice(-4)}`
     })
   }
 
+  await sendGmail(
+    email,
+    "OTP for Online Shop",
+    `Hey, ${name}\n
+    Here is your OTP for Online Shop ${otp}
+    `
+  )
+
   return res.status(200).send({
     success: true,
-    otp,
     message: "OTP is sent to registered email"
   })
 })
@@ -177,7 +188,7 @@ export const verifyOTPHandler = catchAsync(async (req, res) => {
     })
   }
 
-  if (previousOTP.for !== "email") {
+  if (previousOTP.for === "Mobile") {
     await userModel.findByIdAndUpdate(user_id, {
       isMobileVerified: true,
     })

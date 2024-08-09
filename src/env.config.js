@@ -19,5 +19,14 @@ export const AppConfig = {
   TWILIO: {
     ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
     AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+  },
+  GOOGLE_OAUTH: {
+    PASS_KEY: process.env.GOOGLE_PASS_KEY,
+    SENDER: process.env.SENDER_GMAIL,
+    CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+    REFRESH_TOKEN: process.env.GOOGLE_OAUTH_REFRESH_TOKEN,
+    ACCESS_TOKEN: process.env.GOOGLE_OAUTH_ACCESS_TOKEN,
+    REDIRECT_URI: process.env.GOOGLE_OAUTH_REDIRECT_URI
   }
 }
