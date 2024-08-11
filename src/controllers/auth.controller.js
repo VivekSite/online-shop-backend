@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken";
 import { generateOTP, compareOTP } from "../utils/otp.util.js"
 import { createHash, compare } from "../utils/hash.util.js";
 import { catchAsync } from "../utils/response.util.js"
-import { sendMessage } from "../vendors/twilio.vendor.js";
+
+import { sendOTP } from "../vendors/twilio.vendor.js";
+import { sendGmail } from "../vendors/nodemailer.vendor.js";
 
 export const signUpHandler = catchAsync(async (req, res) => {
   const { name, email, password } = req.body;
@@ -91,7 +93,7 @@ export const verifyToken = catchAsync(async (req, res) => {
 });
 
 export const sendOTPHandler = catchAsync(async (req, res) => {
-  const { _id: user_id } = req.auth;
+  const { _id: user_id, name, email } = req.auth;
   if (!user_id) {
     return res.status(401).send({
       success: false,
@@ -99,32 +101,63 @@ export const sendOTPHandler = catchAsync(async (req, res) => {
     });
   }
 
-  let otpFor = "email";
-  const { email, phone_number } = req.body;
-  if (phone_number) {
-    otpFor = "mobile";
-  }
-
-  const { otp, bufferData } = generateOTP(email);
-  const expiresIn = Date.now() + 1000 * 60 * 10;
-  await otpModel.create({
-    user_id,
-    bufferData,
-    for: otpFor,
-    exp: expiresIn,
-  });
-
-  if (otpFor === "mobile") {
-    sendMessage(phone_number, otp)
-    return res.status(200).send({
-      success: true,
-      message: `OTP is sent on number xxxxxx${phone_number.toString().slice(-4)}`
+  const { type, mobile_number } = req.body;
+  if (!type) {
+    return res.status(400).send({
+      success: false,
+      message: "Type is required!"
     })
   }
 
+  if (type !== "Mobile" && type !== "Email") {
+    return res.status(400).send({
+      success: false,
+      message: "Type must be either Mobile or Email"
+    })
+  }
+
+  if (type === "Mobile") {
+    if (!mobile_number || mobile_number.length !== 10) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid mobile number!"
+      })
+    }
+  }
+
+  const { otp, bufferData } = generateOTP(mobile_number || email);
+  const expiresIn = Date.now() + 1000 * 60 * 10;
+
+  // Delete the existing OTPs
+  await otpModel.deleteMany({
+    user_id,
+    type
+  })
+
+  // Add new OTP
+  await otpModel.create({
+    user_id,
+    bufferData,
+    type,
+    exp: expiresIn,
+  });
+
+  if (type === "Mobile") {
+    await sendOTP(mobile_number, otp)
+    return res.status(200).send({
+      success: true,
+      message: `OTP is sent on number xxxxxx${mobile_number.toString().slice(-4)}`
+    })
+  }
+
+  await sendGmail(
+    email,
+    "OTP for Online Shop",
+    `Hey, ${name}\nHere is your OTP for Online Shop ${otp}`
+  )
+
   return res.status(200).send({
     success: true,
-    otp,
     message: "OTP is sent to registered email"
   })
 })
@@ -138,17 +171,31 @@ export const verifyOTPHandler = catchAsync(async (req, res) => {
     });
   }
 
-  const { otp } = req.body;
+  const { type, otp } = req.body;
   if (!otp) {
     return res.status(400).send({
       success: false,
       message: "OTP is required!"
     })
   }
+  if (!type) {
+    return res.status(400).send({
+      success: false,
+      message: "Type is required!"
+    })
+  }
+
+  if (type !== "Mobile" && type !== "Email") {
+    return res.status(400).send({
+      success: false,
+      message: "Type must be either Mobile or Email"
+    })
+  }
 
   const previousOTP = await otpModel.findOne({
-    user_id
-  });
+    user_id,
+    type
+  })
 
   if (!previousOTP) {
     return res.status(404).send({
@@ -177,7 +224,7 @@ export const verifyOTPHandler = catchAsync(async (req, res) => {
     })
   }
 
-  if (previousOTP.for !== "email") {
+  if (previousOTP.type === "Mobile") {
     await userModel.findByIdAndUpdate(user_id, {
       isMobileVerified: true,
     })
