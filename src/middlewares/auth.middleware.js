@@ -97,7 +97,7 @@ const CheckForApiKey = async (req, res, next) => {
       message: "API Key Required!",
     });
   }
-  console.log(apiKey)
+
   const object_id = AppConfig.PORTFOLIO.KEY_OBJECT_ID;
   const existingApi = await apikeyModel.findOne({ _id: object_id });
   const existingApiKey = compare(existingApi.apikey, apiKey);
