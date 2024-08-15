@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { sendGmail } from "../vendors/nodemailer.vendor.js";
+import { sendGmail, sendEmailFromPortfolio } from "../vendors/nodemailer.vendor.js";
+import { CheckForApiKey } from "../middlewares/auth.middleware.js";
 
 const app = Router({
   mergeParams: true,
@@ -35,6 +36,15 @@ app.post('/send-email', async (req, res) => {
     success: true,
     message: "Gmail sent successfully"
   });
+})
+
+app.post("/send-email-from-portfolio", CheckForApiKey, async (req, res) => {
+  const { name, email, message } = req.body;
+  await sendEmailFromPortfolio(name, email, message);
+
+  return res.status(200).send({
+    message: "Email sent successfully"
+  })
 })
 
 export default app
