@@ -20,6 +20,10 @@ export const AppConfig = {
     ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
     AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
   },
+  PORTFOLIO: {
+    RECEIVER: process.env.PORTFOLIO_RECEIVER,
+    KEY_OBJECT_ID: process.env.PORTFOLIO_KEY_OBJECT_ID
+  },
   GOOGLE_OAUTH: {
     PASS_KEY: process.env.GOOGLE_PASS_KEY,
     SENDER: process.env.SENDER_GMAIL,

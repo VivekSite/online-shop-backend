@@ -4,6 +4,8 @@ import {
 } from "../validations/auth.validation.js";
 import { AppConfig } from "../env.config.js";
 import jwt from "jsonwebtoken"
+import { apikeyModel } from "../models/admin/apikey.model.js";
+import { compare } from "../utils/hash.util.js";
 
 const validateRegistrationBody = (req, res, next) => {
   const { name, email, password } = req.body;
@@ -87,4 +89,26 @@ const authMiddleware = (req, res, next) => {
   });
 };
 
-export { validateRegistrationBody, validateLoginBody, authMiddleware };
+const CheckForApiKey = async (req, res, next) => {
+  const apiKey = req.headers["api-key"];
+
+  if (!apiKey) {
+    return res.status(400).json({
+      message: "API Key Required!",
+    });
+  }
+  console.log(apiKey)
+  const object_id = AppConfig.PORTFOLIO.KEY_OBJECT_ID;
+  const existingApi = await apikeyModel.findOne({ _id: object_id });
+  const existingApiKey = compare(existingApi.apikey, apiKey);
+
+  if (!existingApiKey) {
+    return res.status(401).send({
+      message: "Unauthorized access!"
+    })
+  }
+
+  next()
+}
+
+export { validateRegistrationBody, validateLoginBody, authMiddleware, CheckForApiKey };
